@@ -1,52 +1,40 @@
-name: Deploy Sms Tool
+name: Build luci-app-sms-tool
 
 on:
   push:
-    branches: ["main"]
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-# Menetapkan folder kerja default untuk semua langkah 'run'
-defaults:
-  run:
-    working-directory: ./luci-app-sms-tool
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch: # Memungkinkan menjalankan build secara manual
 
 jobs:
-  build-and-deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
+    name: Build for ${{ matrix.arch }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Tambahkan arsitektur lain sesuai kebutuhan router Anda
+        arch: [x86_64, mipsel_24kc, mips_24kc, aarch64_cortex-a53]
+
     steps:
-      - name: Checkout kode
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Build with OpenWrt SDK
+        uses: openwrt/gh-action-sdk@main
+        env:
+          ARCH: ${{ matrix.arch }}
+          # Nama feed bebas, 'action' adalah default
+          FEEDNAME: custom_feed
+          # Menentukan paket yang akan dibangun secara spesifik
+          PACKAGES: luci-app-sms-tool
+          # Pastikan dependencies tersedia jika tidak ada di feed standar
+          IGNORE_ERRORS: 1
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-          # Path ke file lock di dalam folder utama
-          cache-dependency-path: './luci-app-sms-tool/package-lock.json'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build project
-        run: npm run build
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          # Upload seluruh isi folder utama jika tidak ada folder output khusus
-          path: './luci-app-sms-tool'
-
-      - name: Deploy ke GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          name: ${{ matrix.arch }}-ipk
+          # Lokasi output IPK di dalam runner
+          path: bin/packages/${{ matrix.arch }}/custom_feed/*.ipk
