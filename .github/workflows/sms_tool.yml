@@ -44,8 +44,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Ganti 'dist' dengan folder yang muncul (misal: 'build' atau 'out')
-          path: './luci-app-sms-tool/build' 
+          # Upload seluruh isi folder utama jika tidak ada folder output khusus
+          path: './luci-app-sms-tool'
 
       - name: Deploy ke GitHub Pages
         id: deployment
