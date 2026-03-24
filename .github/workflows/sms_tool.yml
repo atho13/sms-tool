@@ -1,0 +1,50 @@
+name: Deploy Sms Tool
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout kode
+        uses: actions/checkout@v4
+
+      # 1. Setup Node.js (Penting agar npm bisa jalan)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # 2. Install library & Build (Mengubah kode jadi file statis)
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+      # 3. Setup Pages & Upload Hasil Build
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Jika folder hasil build Anda bernama 'dist', gunakan 'dist' saja
+          # Jika berada di subfolder, pastikan path-nya benar (contoh: './dist')
+          path: './dist' 
+
+      # 4. Deploy ke GitHub Pages (Langkah terakhir)
+      - name: Deploy ke GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
