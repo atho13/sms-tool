@@ -1,0 +1,45 @@
+name: Build and Release OpenWrt Package
+
+on:
+  push:
+    tags:
+      - 'v1.9.7' # Berjalan hanya jika Anda membuat tag (misal: v1.9.7)
+
+jobs:
+  build:
+    name: Build for ${{ matrix.arch }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Tambahkan arsitektur router lain di sini jika perlu
+        arch: [aarch64_generic, x86_64]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build with OpenWrt SDK
+        uses: openwrt/gh-action-sdk@main
+        env:
+          ARCH: ${{ matrix.arch }}
+          FEEDNAME: custom_feed
+          PACKAGES: luci-app-sms-tool
+
+      - name: Prepare Artifacts
+        run: |
+          mkdir -p release_files
+          # Perintah 'find' mencari semua .ipk di dalam folder bin
+          # dan mengumpulkannya ke folder 'release_files'
+          find bin/packages/ -name "luci-app-sms-tool*.ipk" -exec cp {} release_files/ \;
+          
+          # Opsional: Beri nama unik agar tidak tertukar antar arsitektur
+          cd release_files
+          for f in *.ipk; do mv "$f" "${{ matrix.arch }}-$f"; done
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release_files/*.ipk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
