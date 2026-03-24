@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         # Tambahkan arsitektur lain sesuai kebutuhan router Anda
-        arch: [x86_64, mipsel_24kc, mips_24kc, aarch64_cortex-a53]
+        arch: [x86_64, aarch64_generic]
 
     steps:
       - name: Checkout
