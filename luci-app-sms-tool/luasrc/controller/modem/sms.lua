@@ -1,246 +1,214 @@
--- Copyright 2020-2022 Rafa³ Wabik (IceG) - From eko.one.pl forum
--- Licensed to the GNU General Public License v3.0.
-
-
-	local util = require "luci.util"
-	local fs = require "nixio.fs"
-	local sys = require "luci.sys"
-	local http = require "luci.http"
-	local dispatcher = require "luci.dispatcher"
-	local http = require "luci.http"
-	local sys = require "luci.sys"
-	local uci = require "luci.model.uci".cursor()
-
+local a = require "luci.util"
+local a = require "nixio.fs"
+local a = require "luci.sys"
+local a = require "luci.http"
+local a = require "luci.dispatcher"
+local a = require "luci.http"
+local b = require "luci.sys"
+local b = require "luci.model.uci".cursor()
 module("luci.controller.modem.sms", package.seeall)
 
 function index()
-	entry({"admin", "modem"}, firstchild(), "Modem", 30).dependent=false
-	entry({"admin", "modem", "sms"}, alias("admin", "modem", "sms", "readsms"), translate("SMS Messages"), 20).acl_depends={ "luci-app-sms-tool" }
-	entry({"admin", "modem", "sms", "readsms"},template("modem/readsms"),translate("Received Messages"), 10)
- 	entry({"admin", "modem", "sms", "sendsms"},template("modem/sendsms"),translate("Send Messages"), 20)
- 	entry({"admin", "modem", "sms", "ussd"},template("modem/ussd"),translate("USSD Codes"), 30)
-	entry({"admin", "modem", "sms", "atcommands"},template("modem/atcommands"),translate("AT Commands"), 40)
-	entry({"admin", "modem", "sms", "smsconfig"},cbi("modem/smsconfig"),translate("Configuration"), 50)
-	entry({"admin", "modem", "sms", "delete_one"}, call("delete_sms", smsindex), nil).leaf = true
-	entry({"admin", "modem", "sms", "delete_all"}, call("delete_all_sms"), nil).leaf = true
-	entry({"admin", "modem", "sms", "run_ussd"}, call("ussd"), nil).leaf = true
-	entry({"admin", "modem", "sms", "run_at"}, call("at"), nil).leaf = true
-	entry({"admin", "modem", "sms", "run_sms"}, call("sms"), nil).leaf = true
-	entry({"admin", "modem", "sms", "readsim"}, call("slots"), nil).leaf = true
-	entry({"admin", "modem", "sms", "countsms"}, call("count_sms"), nil).leaf = true
-	entry({"admin", "modem", "sms", "user_ussd"}, call("userussd"), nil).leaf = true
-	entry({"admin", "modem", "sms", "user_atc"}, call("useratc"), nil).leaf = true
-	entry({"admin", "modem", "sms", "user_phonebook"}, call("userphb"), nil).leaf = true
-end
+    entry({"admin", "modem"}, firstchild(), "Modem", 30).dependent = false;
+    entry({"admin", "modem", "sms"}, alias("admin", "modem", "sms", "atcommands"), translate("AT/Message"), 3).acl_depends = {"luci-app-sms-tool"}
+    entry({"admin", "modem", "sms", "readsms"}, template("modem/readsms"), translate("Received Messages"), 10)
+    entry({"admin", "modem", "sms", "sendsms"}, template("modem/sendsms"), translate("Send Messages"), 20)
+    entry({"admin", "modem", "sms", "ussd"}, template("modem/ussd"), translate("USSD Codes"), 30)
+    entry({"admin", "modem", "sms", "atcommands"}, template("modem/atcommands"), translate("AT Commands"), 1)
+    entry({"admin", "modem", "sms", "smsconfig"}, cbi("modem/smsconfig"), translate("Configuration"), 50)
+    entry({"admin", "modem", "sms", "delete_one"}, call("delete_sms", smsindex), nil).leaf = true;
+    entry({"admin", "modem", "sms", "delete_all"}, call("delete_all_sms"), nil).leaf = true;
+    entry({"admin", "modem", "sms", "run_ussd"}, call("ussd"), nil).leaf = true;
+    entry({"admin", "modem", "sms", "run_at"}, call("at"), nil).leaf = true;
+    entry({"admin", "modem", "sms", "run_sms"}, call("sms"), nil).leaf = true;
+    entry({"admin", "modem", "sms", "readsim"}, call("slots"), nil).leaf = true;
+    entry({"admin", "modem", "sms", "countsms"}, call("count_sms"), nil).leaf = true;
+    entry({"admin", "modem", "sms", "user_ussd"}, call("userussd"), nil).leaf = true;
+    entry({"admin", "modem", "sms", "user_atc"}, call("useratc"), nil).leaf = true;
+    entry({"admin", "modem", "sms", "user_phonebook"}, call("userphb"), nil).leaf = true;
+    entry({"admin", "modem", "load_atcmd"}, call("load_atcmd"), nil).leaf = true
+end;
 
-
-function delete_sms(smsindex)
-local devv = tostring(uci:get("sms_tool", "general", "readport"))
-local s = smsindex
-for d in s:gmatch("%d+") do 
-	os.execute("sms_tool -d " .. devv .. " delete " .. d .. "")
-end
-end
+function delete_sms(a)
+    local b = tostring(b:get("sms_tool", "general", "readport"))
+    local a = a;
+    for a in a:gmatch("%d+") do
+        os.execute("sms_tool -d " .. b .. " delete " .. a .. "")
+    end
+end;
 
 function delete_all_sms()
-	local devv = tostring(uci:get("sms_tool", "general", "readport"))
-	os.execute("sms_tool -d " .. devv .. " delete all")
-end
+    local a = tostring(b:get("sms_tool", "general", "readport"))
+    os.execute("sms_tool -d " .. a .. " delete all")
+end;
 
 function get_ussd()
-    local cursor = luci.model.uci.cursor()
-    if cursor:get("sms_tool", "general", "ussd") == "1" then
+    local a = luci.model.uci.cursor()
+    if a:get("sms_tool", "general", "ussd") == "1" then
         return " -R"
     else
         return ""
     end
-end
-
+end;
 
 function get_pdu()
-    local cursor = luci.model.uci.cursor()
-    if cursor:get("sms_tool", "general", "pdu") == "1" then
+    local a = luci.model.uci.cursor()
+    if a:get("sms_tool", "general", "pdu") == "1" then
         return " -r"
     else
         return ""
     end
-end
-
+end;
 
 function ussd()
-    local devv = tostring(uci:get("sms_tool", "general", "ussdport"))
-
-	local ussd = get_ussd()
-	local pdu = get_pdu()
-
-    local ussd_code = http.formvalue("code")
-    if ussd_code then
-	    local odpall = io.popen("sms_tool -d " .. devv .. ussd .. pdu .. " ussd " .. ussd_code .." 2>&1")
-	    local odp =  odpall:read("*a")
-	    odpall:close()
-        http.write(tostring(odp))
+    local c = tostring(b:get("sms_tool", "general", "ussdport"))
+    local d = get_ussd()
+    local e = get_pdu()
+    local b = a.formvalue("code")
+    if b then
+        local b = io.popen("sms_tool -d " .. c .. d .. e .. " ussd " .. b .. " 2>&1")
+        local d = b:read("*a")
+        b:close()
+        a.write(tostring(d))
     else
-        http.write_json(http.formvalue())
+        a.write_json(a.formvalue())
     end
-end
-
+end;
 
 function at()
-    local devv = tostring(uci:get("sms_tool", "general", "atport"))
-
-    local at_code = http.formvalue("code")
-    if at_code then
-	    local odpall = io.popen("sms_tool -d " .. devv .. " at "  ..at_code:gsub("[$]", "\\\$"):gsub("\"", "\\\"").." 2>&1")
-	    local odp =  odpall:read("*a")
-	    odpall:close()
-        http.write(tostring(odp))
+    local d = tostring(b:get("sms_tool", "general", "atport"))
+    local b = a.formvalue("code")
+    if b then
+        local b = io.popen("sms_tool -d " .. d .. " at " .. b:gsub("[$]", "\\$"):gsub("\"", "\\\"") .. " 2>&1")
+        local d = b:read("*a")
+        b:close()
+        a.write(tostring(d))
     else
-        http.write_json(http.formvalue())
+        a.write_json(a.formvalue())
     end
-end
-
+end;
 
 function sms()
-    local devv = tostring(uci:get("sms_tool", "general", "sendport"))
-    local sms_code = http.formvalue("scode")
-
-    nr = (string.sub(sms_code, 1, 20))
-    msgall = string.sub(sms_code, 21)
+    local d = tostring(b:get("sms_tool", "general", "sendport"))
+    local b = a.formvalue("scode")
+    nr = string.sub(b, 1, 20)
+    msgall = string.sub(b, 21)
     msg = string.gsub(msgall, "\n", " ")
-
-    if sms_code then
-	    local odpall = io.popen("sms_tool -d " .. devv .. " send " .. nr .." '".. msg .."'")
-	    local odp =  odpall:read("*a")
-	    odpall:close()
-        http.write(tostring(odp))
+    if b then
+        local b = io.popen("sms_tool -d " .. d .. " send " .. nr .. " '" .. msg .. "'")
+        local d = b:read("*a")
+        b:close()
+        a.write(tostring(d))
     else
-        http.write_json(http.formvalue())
+        a.write_json(a.formvalue())
     end
-
-end
+end;
 
 function slots()
-	local sim = { }
-	local devv = tostring(uci:get("sms_tool", "general", "readport"))
-	local led = tostring(uci:get("sms_tool", "general", "smsled"))
-	local dsled = tostring(uci:get("sms_tool", "general", "ledtype"))
-	local ln = tostring(uci:get("sms_tool", "general", "lednotify"))
-
-	local smsmem = tostring(uci:get("sms_tool", "general", "storage"))
-
-	local statusb = luci.util.exec("sms_tool -s" .. smsmem .. " -d ".. devv .. " status")
-	local usex = string.sub (statusb, 23, 27)
-	local max = statusb:match('[^: ]+$')
-	sim["use"] = string.match(usex, '%d+')
-	local smscount = string.match(usex, '%d+')
-	if ln == "1" then
-      		luci.sys.call("echo " .. smscount .. " > /etc/config/sms_count")
-		if dsled == "S" then
-		luci.util.exec("/etc/init.d/led restart")
-		end
-		if dsled == "D" then
-		luci.sys.call("echo 0 > '/sys/class/leds/" .. led .. "/brightness'")
-		end
- 	end
-	sim["all"] = string.match(max, '%d+')
-	luci.http.prepare_content("application/json")
-	luci.http.write_json(sim)
-end
-
+    local a = {}
+    local d = tostring(b:get("sms_tool", "general", "readport"))
+    local c = tostring(b:get("sms_tool", "general", "smsled"))
+    local e = tostring(b:get("sms_tool", "general", "ledtype"))
+    local f = tostring(b:get("sms_tool", "general", "lednotify"))
+    local b = tostring(b:get("sms_tool", "general", "storage"))
+    local d = luci.util.exec("sms_tool -s" .. b .. " -d " .. d .. " status")
+    local b = string.sub(d, 23, 27)
+    local d = d:match('[^: ]+$')
+    a["use"] = string.match(b, '%d+')
+    local b = string.match(b, '%d+')
+    if f == "1" then
+        luci.sys.call("echo " .. b .. " > /etc/config/sms_count")
+        if e == "S" then
+            luci.util.exec("/etc/init.d/led restart")
+        end;
+        if e == "D" then
+            luci.sys.call("echo 0 > '/sys/class/leds/" .. c .. "/brightness'")
+        end
+    end;
+    a["all"] = string.match(d, '%d+')
+    luci.http.prepare_content("application/json")
+    luci.http.write_json(a)
+end;
 
 function count_sms()
     os.execute("sleep 3")
-    local cursor = luci.model.uci.cursor()
-    if cursor:get("sms_tool", "general", "lednotify") == "1" then
-        local devv = tostring(uci:get("sms_tool", "general", "readport"))
-
-	 local smsmem = tostring(uci:get("sms_tool", "general", "storage"))
-
-        local statusb = luci.util.exec("sms_tool -s" .. smsmem .. " -d ".. devv .. " status")
-        local smsnum = string.sub (statusb, 23, 27)
-        local smscount = string.match(smsnum, '%d+')
-        os.execute("echo " .. smscount .. " > /etc/config/sms_count")
+    local a = luci.model.uci.cursor()
+    if a:get("sms_tool", "general", "lednotify") == "1" then
+        local d = tostring(b:get("sms_tool", "general", "readport"))
+        local a = tostring(b:get("sms_tool", "general", "storage"))
+        local a = luci.util.exec("sms_tool -s" .. a .. " -d " .. d .. " status")
+        local a = string.sub(a, 23, 27)
+        local a = string.match(a, '%d+')
+        os.execute("echo " .. a .. " > /etc/config/sms_count")
     end
-end
+end;
 
-
-function uussd(rv)
-	local c = nixio.fs.access("/etc/config/ussd.user") and
-		io.popen("cat /etc/config/ussd.user")
-
-	if c then
-		for l in c:lines() do
-			local i = l
-			if i then
-				rv[#rv + 1] = {
-					usd = i
-				}
-			end
-		end
-		c:close()
-	end
-end
-
-
+function uussd(b)
+    local a = nixio.fs.access("/etc/config/ussd.user") and io.popen("cat /etc/config/ussd.user")
+    if a then
+        for d in a:lines() do
+            local a = d;
+            if a then
+                b[#b + 1] = {usd = a}
+            end
+        end;
+        a:close()
+    end
+end;
 
 function userussd()
-	local usd = { }
-	uussd(usd)
-	luci.http.prepare_content("application/json")
-	luci.http.write_json(usd)
-end
+    local a = {}
+    uussd(a)
+    luci.http.prepare_content("application/json")
+    luci.http.write_json(a)
+end;
 
-
-function uat(rv)
-	local c = nixio.fs.access("/etc/config/atcmds.user") and
-		io.popen("cat /etc/config/atcmds.user")
-
-	if c then
-		for l in c:lines() do
-			local i = l
-			if i then
-				rv[#rv + 1] = {
-					atu = i
-				}
-			end
-		end
-		c:close()
-	end
-end
-
-
+function uat(b)
+    local a = nixio.fs.access("/etc/config/atcmds.user") and io.popen("cat /etc/config/atcmds.user")
+    if a then
+        for d in a:lines() do
+            local a = d;
+            if a then
+                b[#b + 1] = {atu = a}
+            end
+        end;
+        a:close()
+    end
+end;
 
 function useratc()
-	local atu = { }
-	uat(atu)
-	luci.http.prepare_content("application/json")
-	luci.http.write_json(atu)
-end
+    local a = {}
+    uat(a)
+    luci.http.prepare_content("application/json")
+    luci.http.write_json(a)
+end;
 
-
-
-function uphb(rv)
-	local c = nixio.fs.access("/etc/config/phonebook.user") and
-		io.popen("cat /etc/config/phonebook.user")
-
-	if c then
-		for l in c:lines() do
-			local i = l
-			if i then
-				rv[#rv + 1] = {
-					phb = i
-				}
-			end
-		end
-		c:close()
-	end
-end
-
-
+function uphb(b)
+    local a = nixio.fs.access("/etc/config/phonebook.user") and io.popen("cat /etc/config/phonebook.user")
+    if a then
+        for d in a:lines() do
+            local a = d;
+            if a then
+                b[#b + 1] = {phb = a}
+            end
+        end;
+        a:close()
+    end
+end;
 
 function userphb()
-	local phb = { }
-	uphb(phb)
-	luci.http.prepare_content("application/json")
-	luci.http.write_json(phb)
+    local a = {}
+    uphb(a)
+    luci.http.prepare_content("application/json")
+    luci.http.write_json(a)
+end;
+
+function load_atcmd()
+    local g = require "nixio.fs"
+    local h = require "luci.http"
+    local i = h.formvalue("modem") or "modem1"
+    local j = "/etc/config/atcmds.user." .. i;
+    local k = g.readfile(j) or ""
+    h.prepare_content("text/plain")
+    h.write(k)
 end

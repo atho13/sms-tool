@@ -1,136 +1,167 @@
 <%+header%>
-
-<!--
--- Copyright 2020-2022 Rafał Wabik (IceG) - From eko.one.pl forum
--- Licensed to the GNU General Public License v3.0.
--->
-
-	<h2><%:AT Commands%></h2>
-	<div class="cbi-map-descr"><%:Web UI for handling AT commands via sms_tool. More information about the sms-tool on the%> <a href="https://eko.one.pl/?p=openwrt-sms_tool" target="_blank"><%:eko.one.pl forum%></a>.</div>
-	<p></p>
-	<h4><%:Sending commands to modem%></h4>
-	<div class="table" width="100%">
-
-		<div class="tr">
-			<div class="td left"><%:User AT Commands%>:</div>
-
-			<div class="td left";">
-				<select name="ussd" id="pl" onclick="copyFunction()">
-
- 				</select>
-			</div>
-			<div class="td left""></div>
-			</div>
-
-		<div class="tr">
-			<div class="td left" ><%:Command to send%>:</div>
-			<div class="td left" ><input type="text" id="code"></div>
-		</div>
-
-	</div>
-
-	<div class="table" width="100%">
-		<div class="td left";"><%:Reply%>:
-		<p>
-		<pre id="odp" style="visibility: hidden;"></pre></div>
-
-		<div class="tr cbi-rowstyle-2">
-		<div class="td right"><input type="button" style="margin-right: 5%"; id="sendcmd" class="btn cbi-button cbi-button-neutral" value="<%:Send Command%>" /></div>
-		</div>
-
-	</div>
-
+<style>body{background:#eef2f8;color:#334e68;margin:0;padding:0;display:flex;justify-content:center;align-items:flex-start;min-height:100vh}.atcard{max-width:100%;width:100%;margin:0;border-radius:18px;box-shadow:0 8px 30px rgb(0 0 0 / .1);padding:1em 2em;background:#fff;border:1px solid #e0e6ed;margin-top:5px}.atcard h1{font-size:2.2em;font-weight:700;margin-bottom:.5em;color:#2c3e50;letter-spacing:.5px;text-align:center;position:relative}.atcard h1::after{content:'';display:block;width:60px;height:3px;background:linear-gradient(90deg,#007bff 0%,#0056b3 100%);margin:.5em auto 0 auto;border-radius:2px}.atrow{display:flex;flex-direction:row;align-items:center;margin-bottom:.8em}.atrow label{flex-basis:35%;font-weight:600;color:#4a657f;font-size:1.05em}.atrow .atinput,.atrow select{flex-basis:65%;flex-grow:1;flex-shrink:1;padding:.7em 1em;border:1px solid #ced4da;border-radius:9px;font-size:1em;background:#fdfefe;transition:border 0.3s ease,box-shadow 0.3s ease;color:#495057}.atrow .atinput:focus,.atrow select:focus{border:1.5px solid #007bff;box-shadow:0 0 0 3px rgb(0 123 255 / .25);outline:none}.atrow select{cursor:pointer;-webkit-appearance:none;-moz-appearance:none;appearance:none;background-repeat:no-repeat;background-position:right 10px center;background-size:16px}#sendcmd{background:linear-gradient(90deg,#007bff 0%,#0056b3 100%);color:#fff;font-weight:600;border:none;border-radius:9px;padding:.8em 2.8em;font-size:1.05em;cursor:pointer;box-shadow:0 4px 15px rgb(0 123 255 / .3);transition:background 0.3s ease,transform 0.2s ease,box-shadow 0.3s ease;white-space:nowrap}#sendcmd:hover{background:linear-gradient(90deg,#0056b3 0%,#007bff 100%);transform:translateY(-2px);box-shadow:0 6px 20px rgb(0 123 255 / .4)}#sendcmd:active{transform:translateY(0);box-shadow:0 2px 10px rgb(0 123 255 / .2)}.message-area{font-weight:500;font-size:.95em;padding:8px 15px;border-radius:7px;display:inline-block;min-width:150px;text-align:center;transition:background 0.3s ease,color 0.3s ease}.message-area.info{color:#0060a0;background:#e0f2ff}.message-area.error{color:#c03;background:#ffe6e9}.message-area.success{color:#28a745;background:#e6ffe0}#odp{background:#f8faff;border:1px solid #d1e5f8;color:#2c3e50;font-family:'Consolas','Monaco',monospace;font-size:.9em;border-radius:9px;padding:15px;white-space:pre-wrap;word-wrap:break-word;max-height:250px;overflow-y:auto;visibility:hidden;box-shadow:inset 0 1px 5px rgb(0 0 0 / .05);opacity:0;transform:translateY(10px);transition:all 0.4s ease-out}#odp.visible{visibility:visible;opacity:1;transform:translateY(0)}.separator{width:100%;height:.5px;background-color:#e0e6ed;margin:1em 0}@media (max-width:768px){.atcard{max-width:95vw;padding:1.8em 1em}.atcard h1{font-size:1.8em}.atrow{flex-direction:column;align-items:stretch;gap:8px}.atrow label{flex-basis:auto;margin-bottom:.5em}.atrow .atinput,.atrow select{flex-basis:auto;width:100%}.atrow>div[style*="flex-direction: column"]{width:100%!important;align-items:stretch!important}.atrow>div[style*="flex-direction: column"]>div{flex-direction:column;align-items:stretch;margin-top:10px}#sendcmd{width:100%;margin:0}.message-area{width:100%;margin-left:0}}@media (max-width:480px){.atcard{padding:1.5em .8em}.atcard h1{font-size:1.6em}#sendcmd{padding:.7em 2em;font-size:1em}.message-area{font-size:.9em;padding:6px 10px}}</style>
+<body>
+<div class="atcard">
+    <form onsubmit="return false;">
+        <div class="atrow">
+            <label for="modem-select"><%:Selected Modem%></label>
+            <select id="modem-select" name="modem">
+                <option value="modem1">L850-GL L860-GL</option>
+                <option value="modem2">Dell DW5821e</option>
+                <option value="modem3">Foxconn LT4220</option>
+				<option value="modem4">Foxconn T99W175</option>
+				<option value="modem5">Custom Modem</option>
+            </select>
+        </div>
+        
+        <hr> <div class="atrow">
+            <label for="pl"><%:User AT Commands%></label>
+            <select name="ussd" id="pl" onchange="copyFunction()">
+                <option value=""><%:Select a command%></option>
+            </select>
+        </div>
+        <div class="atrow">
+            <label for="code"><%:Command to send%></label>
+            <input type="text" id="code" class="atinput" autocomplete="off" placeholder="Type or pick from above...">
+        </div>
+        
+        <div class="separator"></div> <div class="atrow">
+            <label></label>
+            <div style="display: flex; flex-grow: 1; align-items: center; gap: 15px;">
+                <button type="button" id="sendcmd"><%:Send Command%></button>
+                <span id="message-area" class="message-area"></span>
+            </div>
+        </div>
+        
+        <hr> <div class="atrow">
+            <label for="odp"><%:Reply Command%></label>
+            <pre id="odp"></pre>
+        </div>
+    </form>
+</div>
 <script type="text/javascript">
+const modemSelect = document.getElementById('modem-select');
+const selectElement = document.getElementById('pl');
+const codeInputElement = document.getElementById('code');
+const replyElement = document.getElementById('odp');
+const sendCommandButton = document.getElementById('sendcmd');
+const messageArea = document.getElementById('message-area');
 
-window.onload = function readUSER() {
-
-
-			XHR.get('<%=luci.dispatcher.build_url("admin", "modem", "sms", "user_atc")%>', null,
-			function(x, json)
-			{
-				select = document.getElementById('pl');
-
-				var count = Object.keys(json).length;
-
-
-					for(var d=0;d<=count;d++)
-						{
-    			    				var opt = document.createElement('option');
-							var s = json[d].atu;
-							var fields = s.split(/;/);
-							var name = fields[0];
-							var code = fields[1];
-							opt.text = name;
-							opt.value = code.trim();
-    					    		opt.innerHTML = name;
-    							select.appendChild(opt);
-						}
-
-			}
-			);
-
-
-
+function showMessage(message,type='info'){
+  messageArea.textContent=message;
+  messageArea.className=`message-area ${type}`;
+}
+function clearMessage(){
+  messageArea.textContent='';
+  messageArea.className='message-area';
 }
 
-function copyFunction() {
-
-  var node = document.getElementById('odp');
-  node.style.visibility = 'hidden';
-
-  var x = document.getElementById("pl").value;
-  document.getElementById("code").value = x;
-  document.getElementById("odp").innerHTML = "";
+function loadATCommandsForModem(modem) {
+  showMessage('<%:Loading AT commands...%>','info');
+  XHR.get('/cgi-bin/luci/admin/modem/load_atcmd?modem=' + encodeURIComponent(modem), null, function(x) {
+    selectElement.innerHTML = '';
+    var defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.text = '<%:Select a command%>';
+    selectElement.appendChild(defaultOpt);
+    
+    // Perbaikan utama: Cek status 200 terlebih dahulu
+    if(x.status === 200) {
+        // Jika statusnya OK, cek apakah ada konten yang valid
+        // Jika responsnya kosong atau hanya 'OK', kita anggap itu normal (tidak ada commands)
+        // Jika ada konten, kita proses seperti biasa
+        if (x.responseText && x.responseText.trim() !== 'OK') {
+            clearMessage();
+            var atLines = x.responseText.split('\n');
+            let found = false;
+            atLines.forEach(function(line) {
+                if(line.trim() && line.indexOf(';') > 0) { // Menambahkan cek format
+                    var fields = line.split(';');
+                    var name = fields[0];
+                    var code = fields[1];
+                    var opt = document.createElement('option');
+                    opt.text = name || line;
+                    opt.value = code ? code.trim() : '';
+                    selectElement.appendChild(opt);
+                    found = true;
+                }
+            });
+            if(!found){
+                showMessage('<%:No AT commands found.%>','info');
+            }
+        } else {
+            // Respons sukses tapi kosong (misalnya hanya "OK" atau string kosong)
+            showMessage('<%:No AT commands found.%>','info');
+        }
+    } else {
+        // Jika status bukan 200, ini adalah error yang sebenarnya
+        showMessage('<%:Failed to load AT commands%>: ' + (x.statusText || 'Unknown error'),'error');
+    }
+  });
 }
 
+modemSelect.addEventListener('change', function() {
+  localStorage.setItem('selectedModem', modemSelect.value);
+  loadATCommandsForModem(modemSelect.value);
+  selectElement.selectedIndex = 0;
+  codeInputElement.value = '';
+  replyElement.classList.remove('visible');
+  replyElement.innerHTML = "";
+  clearMessage();
+});
 
-function postcmd(cmd) {
-    (new XHR()).post("<%=luci.dispatcher.build_url("admin", "modem", "sms", "run_at")%>", {"code":cmd}, function(x) {
-        console.log(x.response)
-        console.log(x)
+document.addEventListener('DOMContentLoaded', function() {
+  var savedModem = localStorage.getItem('selectedModem');
+  if(savedModem) modemSelect.value = savedModem;
+  loadATCommandsForModem(modemSelect.value);
+});
 
-        var aStr = x.response;
-	 var myre = /^[\s\t]*(\r\n|\n|\r)/gm;
-	 var bStr = aStr.replace(myre,"");
-        document.getElementById("odp").innerHTML = bStr;
-	 var el = document.getElementsByName("odp")[0];
-	 el.value.replace(/(\r\n|\n|\r)/gm, "");
-
-
-    });
-    return false;
+function copyFunction(){
+  replyElement.classList.remove('visible');
+  replyElement.innerHTML="";
+  clearMessage();
+  const selectedValue = selectElement.value;
+  codeInputElement.value = selectedValue || "";
 }
 
+function postcmd(cmd){
+  replyElement.classList.remove('visible');
+  replyElement.innerHTML="";
+  clearMessage();
+  showMessage('<%:Sending command...%>','info');
+  (new XHR()).post("<%=luci.dispatcher.build_url('admin', 'modem', 'sms', 'run_at')%>",{"code":cmd},function(x){
+    if(x.status===200){
+      let aStr=x.response;
+      let bStr=aStr.replace(/^[\s\t]*(\r\n|\n|\r)/gm,"").trim();
+      replyElement.innerHTML=bStr;
+      replyElement.classList.add('visible');
+      showMessage('<%:Successfully!%>','success');
+    }else{
+      const errorMessage=x.statusText||'Unknown error';
+      replyElement.innerHTML=`<%:Error sending command%>: ${errorMessage}`;
+      replyElement.classList.add('visible');
+      showMessage(`<%:Error sending command%>: ${errorMessage}`,'error');
+    }
+  });
+}
 
-document.addEventListener('DOMContentLoaded', function (ev) {var button = document.getElementById("sendcmd");
-        button.addEventListener("click", function () {
+function executeCommand(){
+  const commandText=codeInputElement.value.trim();
+  if(commandText.length===0){
+    showMessage('<%:Enter AT Command%>','error');
+    return!1;
+  }
+  postcmd(commandText);
+  return!0;
+}
 
-
-		var s = document.getElementById("code").value;
-		if ( s.length == 0 )
-		{
-  			document.getElementById("odp").innerHTML = "";
-			alert("<%:Please enter a AT Command%>");
-			return false;
-		}
-
-        var cmd = document.getElementById("code");
-        postcmd(cmd.value);
-        cmd.value = "";
-
-	    var node = document.getElementById('odp');
-    	if (node.style.visibility=='visible') {
-        node.style.visibility = 'hidden';
-    	}
-    	else
-        node.style.visibility = 'visible'
-
-        return true;
-        });
-    }, true);
-
-
+sendCommandButton.addEventListener("click",function(){executeCommand();});
+codeInputElement.addEventListener("keydown",function(event){
+  if(event.key==="Enter"){
+    event.preventDefault();
+    executeCommand();
+  }
+});
 </script>
-
+</body>
 <%+footer%>
-

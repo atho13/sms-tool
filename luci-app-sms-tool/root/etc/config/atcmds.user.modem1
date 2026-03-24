@@ -1,0 +1,26 @@
+Date Build;ATI
+Firmware Version;ATI8
+IMEI;AT+CGSN
+IMSI SIM;AT+CIMI
+QOS;AT+CGEQNEG
+APN;AT+XLCSSTOREAPN?
+CPU;AT+GTCPUTYPE=?
+Error check;AT+NEER
+Error check1;AT+XEER
+Signal;AT+CESQ
+Signal RSSI;AT+CSQ?
+Signal RSRQ & RSRP;AT+XCESQ?
+Current Band;AT+XCCINFO?
+CA Band;AT+GTCAINFO?
+Selected Band;AT+XACT?
+Volt;AT+CBC
+Modem Mode;AT+GTUSBMODE?
+Mode NCM;AT+GTUSBMODE=0
+Mode MBIM;AT+GTUSBMODE=7
+Airplane Mode;AT+CFUN=4
+Unmode Airplane;AT+CFUN=1
+Restart Modem;AT+CFUN=15
+WCDMA Only All Band;AT+XACT=1,,,0
+LTE Only All Band;AT+XACT=2,,,0
+WCDMA & LTE All Band;AT+XACT=4,,,0
+B1, B3, B8 & B40;AT+XACT=2,,,101,103,108,140
