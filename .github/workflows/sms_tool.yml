@@ -3,9 +3,10 @@ name: Build luci-app-sms-tool
 on:
   push:
     branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
-  workflow_dispatch: # Memungkinkan menjalankan build secara manual
+  workflow_dispatch: 
+
+permissions:
+  contents: write # WAJIB agar bot bisa membuat Release
 
 jobs:
   build:
@@ -14,7 +15,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Tambahkan arsitektur lain sesuai kebutuhan router Anda
         arch: [x86_64, aarch64_generic]
 
     steps:
@@ -25,16 +25,34 @@ jobs:
         uses: openwrt/gh-action-sdk@main
         env:
           ARCH: ${{ matrix.arch }}
-          # Nama feed bebas, 'action' adalah default
           FEEDNAME: custom_feed
-          # Menentukan paket yang akan dibangun secara spesifik
           PACKAGES: luci-app-sms-tool
-          # Pastikan dependencies tersedia jika tidak ada di feed standar
           IGNORE_ERRORS: 1
 
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
+      - name: Prepare Artifacts
+        run: |
+          mkdir -p release_files
+          # Mencari file .ipk atau .apk di folder bin
+          find bin/packages/ -type f \( -name "*.ipk" -o -name "*.apk" \) -exec cp {} release_files/ \;
+          
+          cd release_files
+          # Rename file agar unik per arsitektur
+          for f in *; do
+            if [ -f "$f" ]; then
+              mv "$f" "${{ matrix.arch }}-$f"
+            fi
+          done
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: ${{ matrix.arch }}-ipk
-          # Lokasi output IPK di dalam runner
-          path: bin/packages/${{ matrix.arch }}/custom_feed/*.ipk
+          files: release_files/*
+          tag_name: latest # Nama release di GitHub
+          name: Release Latest Build
+          body: |
+            Automated build for luci-app-sms-tool.
+            Architecture: ${{ matrix.arch }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
