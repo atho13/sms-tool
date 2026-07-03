@@ -3,10 +3,10 @@ name: Build and Release OpenWrt Package
 on:
   push:
     tags:
-      - 'v*' # Menggunakan v* agar otomatis jalan untuk v1.9.7, v1.9.8, dst.
+      - 'v*'
 
 permissions:
-  contents: write # WAJIB agar bisa upload ke Release
+  contents: write
 
 jobs:
   build:
@@ -31,11 +31,7 @@ jobs:
       - name: Prepare Artifacts
         run: |
           mkdir -p release_files
-          # Gunakan -iname agar pencarian tidak sensitif huruf besar/kecil
-          # Cari di folder bin/ secara menyeluruh
           find bin/ -type f -iname "luci-app-sms-tool*.ipk" -exec cp {} release_files/ \;
-          
-          # Beri nama unik berdasarkan arsitektur
           cd release_files
           for f in *.ipk; do 
             [ -e "$f" ] && mv "$f" "${{ matrix.arch }}-$f"
