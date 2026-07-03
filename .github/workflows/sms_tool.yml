@@ -47,7 +47,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: release_files/*
-          tag_name: latest # Nama release di GitHub
+          tag_name: latest
           name: Release Latest Build
           body: |
             Automated build for luci-app-sms-tool.
